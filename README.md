@@ -40,4 +40,4 @@ header: TIMESTAMP,GRUP,OBJECTE,MP-ÍTEM1,MP-ÍTEM2,MP-ÍTEM3,MP-ÍTEM4,MP-COMENT
 ### How to run
 From within the project's root folder, run:
 
-`python3 insert_data.py YOUR-RESPONSES-CSV-FILE.csv`
+`python3 import_responses.py YOUR-RESPONSES-CSV-FILE.csv`
