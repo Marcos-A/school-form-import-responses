@@ -13,6 +13,7 @@ sudo apt-get install python3
 sudo apt-get install libpq-dev python-dev
 sudo apt install python3-pip
 pip3 install psycopg2
+pip3 install pytz
 ```
 
 2. Set up your "database.ini" file and place it in the project's root folder:
