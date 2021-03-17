@@ -1,36 +1,96 @@
 # -*- coding: UTF-8 -*-
 
-from config import config
+from query_master import *
 import csv
-import psycopg2
-from sys import argv
 from datetime import datetime
 from pytz import timezone
+from sys import argv
 
-#FILENAME = 'resultats_respostes.csv'
 
 def extract_data(filename):
-    data = ()
     with open(filename, 'r', encoding='utf-8') as file_responses:
         responses_reader = csv.DictReader(file_responses)
 
         for row in responses_reader:
-            level = 'CF'
             timestamp = format_timestamp(row["TIMESTAMP"])
-            classgroup = row["GRUP"]
-            degree = get_degree(row["GRUP"])
-            subject = get_item(row["OBJECTE"])
+            classgroup_id, degree_id = get_classgroup_id_and_degree_id(row["GRUP"])
+            subject_code = get_subject_code(row["OBJECTE"], row["GRUP"])
+            subject_id = get_subject_id(subject_code, degree_id)
+            trainer_id = get_trainer_id(subject_id)
+            level_id = get_level_id()
+            evaluation_id = save_evaluation(timestamp, classgroup_id, trainer_id, subject_id, level_id)
 
-            row_data = [timestamp,
-                        level,
-                        degree,
-                        classgroup,
-                        subject
-                        ] + extract_evaluations_with_comment(row)
+            extract_evaluations(evaluation_id, level_id, subject_code, row)
 
-            data += (tuple(row_data),)
 
-    return data
+def extract_evaluations(evaluation_id, level_id, subject_code, row):
+    if subject_code == 'Centre':
+        question1_id = get_question_id(1, level_id, subject_code)
+        save_answer(row['CENTRE-ÍTEM1'], question1_id, evaluation_id)
+
+        question2_id = get_question_id(2, level_id, subject_code)
+        save_answer(row['CENTRE-ÍTEM2'], question2_id, evaluation_id)
+
+        question3_id = get_question_id(3, level_id, subject_code)
+        save_answer(row['CENTRE-ÍTEM3'], question3_id, evaluation_id)
+
+        question4_id = get_question_id(4, level_id, subject_code)
+        save_answer(row['CENTRE-ÍTEM4'], question4_id, evaluation_id)
+
+        question5_id = get_question_id(5, level_id, subject_code)
+        save_answer(row['CENTRE-ÍTEM5'], question5_id, evaluation_id)
+
+        question6_id = get_question_id(6, level_id, subject_code)
+        save_answer(row['CENTRE-ÍTEM6'], question6_id, evaluation_id)
+
+        opinion_id = get_question_id(7, level_id, subject_code)
+        save_answer(row['CENTRE-COMENTARI'], opinion_id, evaluation_id)
+
+    elif subject_code == 'Tutoria1':
+        question1_id = get_question_id(1, level_id, subject_code)
+        save_answer(row['TUTORIA1-ÍTEM1'], question1_id, evaluation_id)
+
+        question2_id = get_question_id(2, level_id, subject_code)
+        save_answer(row['TUTORIA1-ÍTEM2'], question2_id, evaluation_id)
+
+        question3_id = get_question_id(3, level_id, subject_code)
+        save_answer(row['TUTORIA1-ÍTEM3'], question3_id, evaluation_id)
+
+        opinion_id = get_question_id(4, level_id, subject_code)
+        save_answer(row['TUTORIA1-COMENTARI'], opinion_id, evaluation_id)
+
+    elif subject_code == 'Tutoria2':
+        question1_id = get_question_id(1, level_id, subject_code)
+        save_answer(row['TUTORIA2-ÍTEM1'], question1_id, evaluation_id)
+
+        question2_id = get_question_id(2, level_id, subject_code)
+        save_answer(row['TUTORIA2-ÍTEM2'], question2_id, evaluation_id)
+
+        question3_id = get_question_id(3, level_id, subject_code)
+        save_answer(row['TUTORIA2-ÍTEM3'], question3_id, evaluation_id)
+
+        question4_id = get_question_id(4, level_id, subject_code)
+        save_answer(row['TUTORIA2-ÍTEM4'], question3_id, evaluation_id)
+
+        opinion_id = get_question_id(5, level_id, subject_code)
+        save_answer(row['TUTORIA2-COMENTARI'], opinion_id, evaluation_id)
+
+    # Assignatura
+    else:
+        question1_id = get_question_id(1, level_id, subject_code)
+        save_answer(row['MP-ÍTEM1'], question1_id, evaluation_id)
+
+        question2_id = get_question_id(2, level_id, subject_code)
+        save_answer(row['MP-ÍTEM2'], question2_id, evaluation_id)
+
+        question3_id = get_question_id(3, level_id, subject_code)
+        save_answer(row['MP-ÍTEM3'], question3_id, evaluation_id)
+
+        question4_id = get_question_id(4, level_id, subject_code)
+        save_answer(row['MP-ÍTEM4'], question3_id, evaluation_id)
+
+        opinion_id = get_question_id(5, level_id, subject_code)
+        save_answer(row['MP-COMENTARI'], opinion_id, evaluation_id)
 
 
 def format_timestamp(timestamp):
@@ -45,89 +105,33 @@ def format_timestamp(timestamp):
     return timezone_aware_timestamp
 
 
-def get_degree(classgroup):
-    degree = ''
-    for letter in classgroup:
-        if not letter.isnumeric():
-            degree += letter
-        else:
-            break
-
-    return degree
-
-
-def get_item(full_item_info):
+def get_subject_code(full_item_info, classgroup_info):
     if "centre" in full_item_info.lower():
         return "Centre"
 
     elif "tutoria" in full_item_info.lower():
-        return "Tutoria"
-
+        if '1' in classgroup_info:
+            return "Tutoria1"
+        elif '2' in classgroup_info:
+            return "Tutoria2"
     else:
         if '-' in full_item_info:
             item = full_item_info.split(' - ')[0]
         else:
             item = full_item_info
-        # Remove leading zeroes
-        if item[2] == '0' and item[3].isnumeric():
-            item = item[0] + item[1] + item[3]
-
         return item
 
 
-def extract_evaluations_with_comment(evaluations_dict):
-    evaluations = []
-    for value in evaluations_dict.values():
-        if value.isnumeric() and int(value)>=1 and int(value)<=10:
-            evaluations.append(value)
-
-    while len(evaluations)<6:
-        evaluations.append(None)
-
-    comment_added = False
-    for key in evaluations_dict.keys():
-        if 'comentari' in key.lower() and evaluations_dict.get(key) != '':
-            evaluations.append(evaluations_dict.get(key))
-            comment_added = True
-
-    if not comment_added: evaluations.append('')
-
-    return evaluations
-
-
-def export_data_to_db(data):
-    sql = """
-         INSERT INTO forms_evaluation(timestamp,
-                                      level, degree_id,
-                                      classgroup, subject_id,
-                                      question1, question2, question3,
-                                      question4, question5, question6,
-                                      opinion)
-         VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
-      """
-    conn = None
-    try:
-        params = config()
-        print('Connecting to the PostgreSQL database...')
-
-        conn = psycopg2.connect(**params)
-        cursor = conn.cursor()
-
-        cursor.executemany(sql, data)
-
-        cursor.close()
-        conn.commit()
-
-    except (Exception, psycopg2.DatabaseError) as error:
-        print(error)
-
-    finally:
-        if conn is not None:
-            conn.close()
-            print('Database connection closed.')
+def succeed():
+    print('\033[92m' + 'OK' + '\033[0m')
 
 
 if __name__ == '__main__':
     filename = argv[1]
-    data = extract_data(filename)
-    export_data_to_db(data)
+    print('\033[93m' + 'Importing responses to database. This process may take a while.' + '\033[0m')
+    print("\u200a\u200aImporting data from " + filename + "...", end=" ")
+    try:
+        extract_data(filename)
+        succeed()
+    except Exception as e:
+        catch_exception(e)

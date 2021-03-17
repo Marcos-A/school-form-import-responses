@@ -1,0 +1,204 @@
+from config import config_master, config_public
+import psycopg2
+import sys
+import traceback
+
+
+def get_level_id(level_code='CF'):
+    sql = """
+            SELECT id FROM master.level
+            WHERE code = %s;
+          """
+    conn = None
+    try:
+        params = config_master()
+        conn = psycopg2.connect(**params)
+        cursor = conn.cursor()
+        cursor.execute(sql, (level_code,))
+        level_id = cursor.fetchone()[0]
+        cursor.close()
+        conn.commit()
+    except (Exception, psycopg2.DatabaseError) as error:
+        catch_exception(error)
+    finally:
+        if conn is not None:
+            conn.close()
+        return level_id
+
+
+
+def get_classgroup_id_and_degree_id(classgroup_name):
+    sql = """
+            SELECT id, degree_id FROM master."group"
+            WHERE name = %s;
+          """
+    conn = None
+    try:
+        params = config_master()
+        conn = psycopg2.connect(**params)
+        cursor = conn.cursor()
+        cursor.execute(sql, (classgroup_name,))
+        query_result = cursor.fetchone()
+        classgroup_id = query_result[0]
+        degree_id = query_result[1]
+        cursor.close()
+        conn.commit()
+    except (Exception, psycopg2.DatabaseError) as error:
+        catch_exception(error)
+    finally:
+        if conn is not None:
+            conn.close()
+        return classgroup_id, degree_id
+
+
+# Get trainer id from 'master' schema of database based on a subject id.
+# In case of multiple trainers associated with the same subject,
+# the function returns only the first one.
+def get_trainer_id(subject_id):
+    sql = "SELECT trainer_id FROM master.subject_trainer WHERE subject_id = %s;"
+    conn = None
+    try:
+        params = config_master()
+        conn = psycopg2.connect(**params)
+        cursor = conn.cursor()
+        cursor.execute(sql, (subject_id,))
+        query_result = cursor.fetchone()
+        if query_result is not None:
+            trainer_id = query_result[0]
+        # Subject without assigned trainer
+        else:
+            trainer_id = None
+        cursor.close()
+        conn.commit()
+    except (Exception, psycopg2.DatabaseError) as error:
+        catch_exception(error)
+    finally:
+        if conn is not None:
+            conn.close()
+        return trainer_id
+
+
+
+# Get subject id from 'master' schema of database
+def get_subject_id(subject_code, degree_id):
+    sql = "SELECT id FROM master.subject WHERE code = %s AND degree_id = %s;"
+    conn = None
+    try:
+        params = config_master()
+        conn = psycopg2.connect(**params)
+        cursor = conn.cursor()
+        cursor.execute(sql, (subject_code, degree_id,))
+        subject_id = cursor.fetchone()[0]
+        cursor.close()
+        conn.commit()
+    except (Exception, psycopg2.DatabaseError) as error:
+        catch_exception(error)
+    finally:
+        if conn is not None:
+            conn.close()
+        return subject_id
+
+
+def save_evaluation(timestamp, classgroup_id, trainer_id, subject_id, level_id):
+    evaluation_data = (timestamp, classgroup_id, trainer_id, subject_id, level_id,)
+    sql = """
+            INSERT INTO public.forms_evaluation(timestamp, classgroup_id, trainer_id, subject_id, level_id)
+            VALUES(%s, %s, %s, %s, %s)
+            RETURNING id;
+          """
+    conn = None
+    try:
+        params = config_public()
+        conn = psycopg2.connect(**params)
+        cursor = conn.cursor()
+        cursor.execute(sql, evaluation_data)
+        evaluation_id = cursor.fetchone()[0]
+        cursor.close()
+        conn.commit()
+    except (Exception, psycopg2.DatabaseError) as error:
+        catch_exception(error)
+    finally:
+        if conn is not None:
+            conn.close()
+        return evaluation_id
+
+
+# Get question id from 'master' schema of database
+def get_question_id(sort, level_id, subject_code):
+    sql = """
+            SELECT id FROM master.question
+            WHERE sort = %s AND level_id = %s AND
+                  topic_id = %s AND disabled IS NULL;
+          """
+    conn = None
+    try:
+        params = config_master()
+        conn = psycopg2.connect(**params)
+        cursor = conn.cursor()
+        cursor.execute(sql, (sort, level_id, get_topic_id(subject_code)))
+        question_id = cursor.fetchone()[0]
+        cursor.close()
+        conn.commit()
+    except (Exception, psycopg2.DatabaseError) as error:
+        catch_exception(error)
+    finally:
+        if conn is not None:
+            conn.close()
+        return question_id
+
+
+# Get topic id from 'master' schema of database
+def get_topic_id(subject_code):
+    if 'tutoria1' in subject_code.lower():
+        topic_name = 'Tutoria 1r CF'
+    elif 'tutoria2' in subject_code.lower():
+        topic_name = 'Tutoria 2n CF'
+    elif 'centre' in subject_code.lower():
+        topic_name = 'Centre'
+    else:
+        topic_name = 'Assignatura'
+
+    sql = "SELECT id FROM master.topic WHERE name = %s;"
+    conn = None
+    try:
+        params = config_master()
+        conn = psycopg2.connect(**params)
+        cursor = conn.cursor()
+        cursor.execute(sql, (topic_name,))
+        topic_id = cursor.fetchone()[0]
+        cursor.close()
+        conn.commit()
+    except (Exception, psycopg2.DatabaseError) as error:
+        catch_exception(error)
+    finally:
+        if conn is not None:
+            conn.close()
+    return topic_id
+
+
+def save_answer(value, question_id, evaluation_id):
+    answer_data = (value, question_id, evaluation_id,)
+    sql = """
+            INSERT INTO public.forms_answer(value, question_id, evaluation_id)
+            VALUES(%s, %s, %s);
+          """
+    conn = None
+    try:
+        params = config_public()
+        conn = psycopg2.connect(**params)
+        cursor = conn.cursor()
+        cursor.execute(sql, answer_data)
+        cursor.close()
+        conn.commit()
+    except (Exception, psycopg2.DatabaseError) as error:
+        catch_exception(error)
+    finally:
+        if conn is not None:
+            conn.close()
+        return evaluation_id
+
+
+def catch_exception(e):    
+    print(str(e))
+    print(traceback.format_exc())    
+    sys.exit()

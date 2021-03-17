@@ -41,3 +41,6 @@ header: TIMESTAMP,GRUP,OBJECTE,MP-ÍTEM1,MP-ÍTEM2,MP-ÍTEM3,MP-ÍTEM4,MP-COMENT
 From within the project's root folder, run:
 
 `python3 import_responses.py YOUR-RESPONSES-CSV-FILE.csv`
+
+After importing the old responses, an old question can be also imported and the old responses's proper question id updated running:
+`python3 question_fixer.py`
