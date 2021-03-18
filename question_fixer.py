@@ -53,6 +53,7 @@ def add_question():
         question_id = cursor.fetchone()[0]
         cursor.close()
         conn.commit()
+        succeed()
     except (Exception, psycopg2.DatabaseError) as error:
         catch_exception(error)
     finally:
@@ -117,6 +118,7 @@ def update_question_number(updated_question_id, current_question_id):
         cursor.execute(sql, (updated_question_id, current_question_id,))
         cursor.close()
         conn.commit()
+        succeed()
     except (Exception, psycopg2.DatabaseError) as error:
         catch_exception(error)
     finally:
@@ -125,8 +127,8 @@ def update_question_number(updated_question_id, current_question_id):
 
 
 if __name__ == '__main__':
+    print("\u200a\u200aAdding old question to the database...", end =" ")
     updated_question_id, level_id = add_question()
     current_question_id = get_question_id(5, level_id, 'Centre')
-    print(updated_question_id)
-    print(current_question_id)
+    print("\u200a\u200aUpdating question id in old answers...", end =" ")
     update_question_number(updated_question_id, current_question_id)

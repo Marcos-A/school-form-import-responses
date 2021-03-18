@@ -8,19 +8,23 @@ from sys import argv
 
 
 def extract_data(filename):
-    with open(filename, 'r', encoding='utf-8') as file_responses:
-        responses_reader = csv.DictReader(file_responses)
+    try:
+        with open(filename, 'r', encoding='utf-8') as file_responses:
+            responses_reader = csv.DictReader(file_responses)
 
-        for row in responses_reader:
-            timestamp = format_timestamp(row["TIMESTAMP"])
-            classgroup_id, degree_id = get_classgroup_id_and_degree_id(row["GRUP"])
-            subject_code = get_subject_code(row["OBJECTE"], row["GRUP"])
-            subject_id = get_subject_id(subject_code, degree_id)
-            trainer_id = get_trainer_id(subject_id)
-            level_id = get_level_id()
-            evaluation_id = save_evaluation(timestamp, classgroup_id, trainer_id, subject_id, level_id)
+            for row in responses_reader:
+                timestamp = format_timestamp(row["TIMESTAMP"])
+                classgroup_id, degree_id = get_classgroup_id_and_degree_id(row["GRUP"])
+                subject_code = get_subject_code(row["OBJECTE"], row["GRUP"])
+                subject_id = get_subject_id(subject_code, degree_id)
+                trainer_id = get_trainer_id(subject_id)
+                level_id = get_level_id()
+                evaluation_id = save_evaluation(timestamp, classgroup_id, trainer_id, subject_id, level_id)
 
-            extract_evaluations(evaluation_id, level_id, subject_code, row)
+                extract_evaluations(evaluation_id, level_id, subject_code, row)
+        succeed()
+    except Exception as e:
+        catch_exception(e)
 
 
 def extract_evaluations(evaluation_id, level_id, subject_code, row):
@@ -122,16 +126,8 @@ def get_subject_code(full_item_info, classgroup_info):
         return item
 
 
-def succeed():
-    print('\033[92m' + 'OK' + '\033[0m')
-
-
 if __name__ == '__main__':
     filename = argv[1]
-    print('\033[93m' + 'Importing responses to database. This process may take a while.' + '\033[0m')
+    print('\033[93m' + 'Inserting answers into database. This process may take a while.' + '\033[0m')
     print("\u200a\u200aImporting data from " + filename + "...", end=" ")
-    try:
-        extract_data(filename)
-        succeed()
-    except Exception as e:
-        catch_exception(e)
+    extract_data(filename)

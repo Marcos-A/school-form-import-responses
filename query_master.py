@@ -198,6 +198,10 @@ def save_answer(value, question_id, evaluation_id):
         return evaluation_id
 
 
+def succeed():
+    print('\033[92m' + 'OK' + '\033[0m')
+
+
 def catch_exception(e):    
     print(str(e))
     print(traceback.format_exc())    
