@@ -4,7 +4,7 @@ import sys
 import traceback
 
 
-def get_level_id(level_code='CF'):
+def get_level_id(level_code):
     sql = """
             SELECT id FROM master.level
             WHERE code = %s;
@@ -27,7 +27,7 @@ def get_level_id(level_code='CF'):
 
 
 
-def get_classgroup_id_and_degree_id(classgroup_name):
+def get_group_id_and_degree_id(group_name):
     sql = """
             SELECT id, degree_id FROM master."group"
             WHERE name = %s;
@@ -37,9 +37,9 @@ def get_classgroup_id_and_degree_id(classgroup_name):
         params = config_master()
         conn = psycopg2.connect(**params)
         cursor = conn.cursor()
-        cursor.execute(sql, (classgroup_name,))
+        cursor.execute(sql, (group_name,))
         query_result = cursor.fetchone()
-        classgroup_id = query_result[0]
+        group_id = query_result[0]
         degree_id = query_result[1]
         cursor.close()
         conn.commit()
@@ -48,14 +48,14 @@ def get_classgroup_id_and_degree_id(classgroup_name):
     finally:
         if conn is not None:
             conn.close()
-        return classgroup_id, degree_id
+        return group_id, degree_id
 
 
 # Get trainer id from 'master' schema of database based on a subject id.
 # In case of multiple trainers associated with the same subject,
 # the function returns only the first one.
 def get_trainer_id(subject_id):
-    sql = "SELECT trainer_id FROM master.subject_trainer WHERE subject_id = %s;"
+    sql = "SELECT trainer_id FROM master.subject_trainer_group WHERE subject_id = %s;"
     conn = None
     try:
         params = config_master()
@@ -99,11 +99,11 @@ def get_subject_id(subject_code, degree_id):
         return subject_id
 
 
-def save_evaluation(timestamp, classgroup_id, trainer_id, subject_id, level_id):
-    evaluation_data = (timestamp, classgroup_id, trainer_id, subject_id, level_id,)
+def save_evaluation(timestamp, group_id, trainer_id, subject_id):
+    evaluation_data = (timestamp, group_id, trainer_id, subject_id,)
     sql = """
-            INSERT INTO public.forms_evaluation(timestamp, classgroup_id, trainer_id, subject_id, level_id)
-            VALUES(%s, %s, %s, %s, %s)
+            INSERT INTO public.forms_evaluation(timestamp, group_id, trainer_id, subject_id)
+            VALUES(%s, %s, %s, %s)
             RETURNING id;
           """
     conn = None

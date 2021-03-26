@@ -14,12 +14,12 @@ def extract_data(filename):
 
             for row in responses_reader:
                 timestamp = format_timestamp(row["TIMESTAMP"])
-                classgroup_id, degree_id = get_classgroup_id_and_degree_id(row["GRUP"])
+                group_id, degree_id = get_group_id_and_degree_id(fix_group_name(row["GRUP"]))
                 subject_code = get_subject_code(row["OBJECTE"], row["GRUP"])
                 subject_id = get_subject_id(subject_code, degree_id)
                 trainer_id = get_trainer_id(subject_id)
-                level_id = get_level_id()
-                evaluation_id = save_evaluation(timestamp, classgroup_id, trainer_id, subject_id, level_id)
+                level_id = get_level_id('CF')
+                evaluation_id = save_evaluation(timestamp, group_id, trainer_id, subject_id,)
 
                 extract_evaluations(evaluation_id, level_id, subject_code, row)
         succeed()
@@ -109,14 +109,14 @@ def format_timestamp(timestamp):
     return timezone_aware_timestamp
 
 
-def get_subject_code(full_item_info, classgroup_info):
+def get_subject_code(full_item_info, group_info):
     if "centre" in full_item_info.lower():
         return "Centre"
 
     elif "tutoria" in full_item_info.lower():
-        if '1' in classgroup_info:
+        if '1' in group_info:
             return "Tutoria1"
-        elif '2' in classgroup_info:
+        elif '2' in group_info:
             return "Tutoria2"
     else:
         if '-' in full_item_info:
@@ -124,6 +124,18 @@ def get_subject_code(full_item_info, classgroup_info):
         else:
             item = full_item_info
         return item
+
+
+# Fix DAM group names
+def fix_group_name(group):
+    if group == 'DAM1A':
+        return 'DAM1'
+    elif group == 'DAM1B':
+        return 'ASIX1'
+    elif group == 'DAM2':
+    	return 'DAM2A'
+    else:
+        return group
 
 
 if __name__ == '__main__':
