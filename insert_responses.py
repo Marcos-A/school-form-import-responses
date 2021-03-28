@@ -74,7 +74,7 @@ def extract_evaluations(evaluation_id, level_id, subject_code, row):
         save_answer(row['TUTORIA2-ÍTEM3'], question3_id, evaluation_id)
 
         question4_id = get_question_id(4, level_id, subject_code)
-        save_answer(row['TUTORIA2-ÍTEM4'], question3_id, evaluation_id)
+        save_answer(row['TUTORIA2-ÍTEM4'], question4_id, evaluation_id)
 
         opinion_id = get_question_id(5, level_id, subject_code)
         save_answer(row['TUTORIA2-COMENTARI'], opinion_id, evaluation_id)
@@ -91,7 +91,7 @@ def extract_evaluations(evaluation_id, level_id, subject_code, row):
         save_answer(row['MP-ÍTEM3'], question3_id, evaluation_id)
 
         question4_id = get_question_id(4, level_id, subject_code)
-        save_answer(row['MP-ÍTEM4'], question3_id, evaluation_id)
+        save_answer(row['MP-ÍTEM4'], question4_id, evaluation_id)
 
         opinion_id = get_question_id(5, level_id, subject_code)
         save_answer(row['MP-COMENTARI'], opinion_id, evaluation_id)
