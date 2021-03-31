@@ -51,32 +51,27 @@ def get_group_id_and_degree_id(group_name):
         return group_id, degree_id
 
 
-# Get trainer id from 'master' schema of database based on a subject id.
-# In case of multiple trainers associated with the same subject,
-# the function returns only the first one.
-def get_trainer_id(subject_id):
-    sql = "SELECT trainer_id FROM master.subject_trainer_group WHERE subject_id = %s;"
-    conn = None
-    try:
-        params = config_master()
-        conn = psycopg2.connect(**params)
-        cursor = conn.cursor()
-        cursor.execute(sql, (subject_id,))
-        query_result = cursor.fetchone()
-        if query_result is not None:
-            trainer_id = query_result[0]
-        # Subject without assigned trainer
-        else:
-            trainer_id = None
-        cursor.close()
-        conn.commit()
-    except (Exception, psycopg2.DatabaseError) as error:
-        catch_exception(error)
-    finally:
-        if conn is not None:
-            conn.close()
-        return trainer_id
-
+# Get trainer id from trainer name
+def get_trainer_id_by_name(trainer_name):
+    if trainer_name is None:
+        return None
+    else:
+        sql = "SELECT id FROM master.trainer WHERE name = %s;"
+        conn = None
+        try:
+            params = config_master()
+            conn = psycopg2.connect(**params)
+            cursor = conn.cursor()
+            cursor.execute(sql, (trainer_name,))
+            trainer_id = cursor.fetchone()[0]
+            cursor.close()
+            conn.commit()
+        except (Exception, psycopg2.DatabaseError) as error:
+            catch_exception(error)
+        finally:
+            if conn is not None:
+                conn.close()
+            return trainer_id
 
 
 # Get subject id from 'master' schema of database

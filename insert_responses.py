@@ -15,9 +15,10 @@ def extract_data(filename):
             for row in responses_reader:
                 timestamp = format_timestamp(row["TIMESTAMP"])
                 group_id, degree_id = get_group_id_and_degree_id(fix_group_name(row["GRUP"]))
+                trainer_name = get_trainer_name(row["OBJECTE"])
                 subject_code = get_subject_code(row["OBJECTE"], row["GRUP"])
                 subject_id = get_subject_id(subject_code, degree_id)
-                trainer_id = get_trainer_id(subject_id)
+                trainer_id = get_trainer_id_by_name(trainer_name)
                 level_id = get_level_id('CF')
                 evaluation_id = save_evaluation(timestamp, group_id, trainer_id, subject_id,)
 
@@ -136,6 +137,28 @@ def fix_group_name(group):
     	return 'DAM2A'
     else:
         return group
+
+
+# Extract trainer's name from row["OBJECTE"]
+def get_trainer_name(objecte):
+    if (not "(" in objecte and not ")" in objecte):
+        return None
+    else:
+        trainer_name = objecte.split('(')[1].split(')')[0]
+        if trainer_name == 'Ana':
+            return 'Ana L'
+        elif trainer_name == 'Anna':
+            return 'Anna C'
+        elif trainer_name == 'Juan':
+            return 'Juan Z'
+        elif trainer_name == 'Marcos':
+            return 'Marcos A'
+        elif trainer_name == 'Montse':
+            return 'Montse P'
+        elif trainer_name == 'Xavi':
+            return 'Xavi C'
+        else:
+            return None
 
 
 if __name__ == '__main__':
