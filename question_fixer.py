@@ -88,27 +88,12 @@ def get_question_id(sort, level_id, subject_code):
 
 def update_question_number(updated_question_id, current_question_id):
     sql = """
-            UPDATE forms_answer AS an
+            UPDATE public.forms_answer AS an
             SET question_id = %s
-            FROM forms_evaluation AS fe
+            FROM public.forms_evaluation AS fe
             WHERE fe.id = an.evaluation_id
                 AND fe.timestamp <= '2021/01/01'::date
                 AND an.question_id = %s;
-          """
-    test2 = """
-            UPDATE public.forms_answer 
-            SET question_id = %s
-            FROM public.forms_answer an
-                LEFT JOIN public.forms_evaluation fe ON fe.id = an.evaluation_id
-            WHERE fe.timestamp <= '2021/01/01'::date
-                AND an.question_id = %s;
-          """
-
-    test = """
-            SELECT an.question_id, fe.timestamp
-            FROM public.forms_answer an
-                LEFT JOIN public.forms_evaluation fe ON fe.id = an.id
-            WHERE fe.timestamp <= '2021/01/01'::date
           """
     conn = None
     try:
