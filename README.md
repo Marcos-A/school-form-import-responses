@@ -1,7 +1,7 @@
 # school-form-import-responses
 Populates the school-form database with survey responses extracted from Google Forms.
 
-Designed as a helper to set up: [https://github.com/Marcos-A/school-form](https://github.com/Marcos-A/school-form)
+Designed as a helper to set up: [https://github.com/Marcos-A/teaching-stats](https://github.com/Marcos-A/teaching-stats)
 
 ---
 
